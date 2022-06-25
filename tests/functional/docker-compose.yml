@@ -1,0 +1,53 @@
+version: '3'
+services:
+  api:
+    container_name: api
+    build: ../../.
+    image: fastapi-image
+    ports:
+      - '8000:8000'
+    environment:
+      - REDIS_URL=${REDIS_URL}
+      - ES_HOST=${ES_HOST}
+      - ES_PORT=${ES_PORT}
+    depends_on:
+      - elastic_search
+      - redis
+
+  tests:
+    container_name: tests
+    image: fastapi-image
+    ports:
+      - '8001:8001'
+    volumes:
+      - ./:/home/app/
+    environment:
+      - REDIS_URL=${REDIS_URL}
+      - ES_HOST=${ES_HOST}
+      - ES_PORT=${ES_PORT}
+      - API_URL=${API_URL}
+    entrypoint: >
+      sh -c "pip install -r requirements.txt
+      && python3 utils/wait_for_es.py
+      && python3 utils/wait_for_redis.py
+      && pytest src -vv"
+    depends_on:
+      - api
+
+  elastic_search:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.4
+    container_name: es_service
+    ports:
+      - '9200:9200'
+    environment:
+      - "discovery.type=single-node"
+    volumes:
+      - ${HOST_PATH_ES}:/usr/share/elasticsearch/data
+
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - ${HOST_PATH_REDIS}:/var/lib/redis/data
