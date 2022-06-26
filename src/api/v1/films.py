@@ -1,7 +1,7 @@
 from http import HTTPStatus
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from api.v1.models_api.film import FilmDetails, Film
 from api.v1.utils.errors import NotFoundDetail
@@ -37,7 +37,11 @@ async def films_search(
     - **title**: film title
     - **imdb_rating**: rating of the movie
     """
-    films_list = await film_service.get_list(query=query, **common_params)
+    films_list = await film_service.get_list(
+        query=query, **common_params,
+        fields=['id', 'title', 'imdb_rating']
+    )
+
     if not films_list:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail=NotFoundDetail.FILMS
@@ -90,8 +94,11 @@ async def films(
     - **title**: film title
     - **imdb_rating**: rating of the movie
     """
-    films_list = await film_service.get_list(genre=genre, similar_to=similar_to,
-                                             **common_params)
+    films_list = await film_service.get_list(
+        genre=genre, similar_to=similar_to,
+        **common_params, fields=['id', 'title', 'imdb_rating']
+    )
+
     if not films_list:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail=NotFoundDetail.FILMS

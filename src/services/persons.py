@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pprint import pprint
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from elasticsearch_dsl import Q
@@ -7,6 +8,7 @@ from fastapi import Depends
 from db.elastic import get_elastic
 from models.person import Person
 from services.base import BaseService
+from utils.cache import ICache, get_cache_storage
 
 
 class PersonService(BaseService):
@@ -18,18 +20,24 @@ class PersonService(BaseService):
         return lambda query: Q('match', full_name={'query': query})
 
     async def get_persons(self, person_id):
-        from services.films import FilmService
-        person = await self.es_manager.get_by_id(person_id)
 
-        film_manager = FilmService(self.elastic).es_manager
+        from services.films import FilmService
+
+        person = await self.get_by_id(person_id)
+
+        film_service = FilmService(self.elastic, self.cache_storage)
         try:
-            films = await film_manager.get_list(person=person_id)
+            films = await film_service.get_list(
+                person=person_id,
+                fields=['id', 'title', 'directors', 'writers', 'actors'])
         except NotFoundError:
             return None
 
         if not films:
             return [person]
 
+        print('films:')
+        pprint(films)
         persons_films = []
         self._set_films_for_person(persons_films, person_id,
                                    person.full_name, films)
@@ -75,6 +83,7 @@ class PersonService(BaseService):
 
 @lru_cache()
 def get_person_service(
-        elastic: AsyncElasticsearch = Depends(get_elastic)
+        elastic: AsyncElasticsearch = Depends(get_elastic),
+        cache_storage: ICache = Depends(get_cache_storage)
 ) -> PersonService:
-    return PersonService(elastic)
+    return PersonService(elastic, cache_storage)
