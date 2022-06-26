@@ -33,6 +33,7 @@ async def persons_search(
     - **film_ids**: list of films in which a person participated in a particular role
     """
     persons_list = await person_service.get_list(query=query)
+    
     if not persons_list:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail=NotFoundDetail.PERSONS
@@ -54,7 +55,9 @@ async def person_films(
     - **title**: film title
     - **imdb_rating**: rating of the movie
     """
-    films = await film_service.get_list(person=person_id)
+    films = await film_service.get_list(
+        person=person_id,
+        fields=['id', 'title', 'imdb_rating'])
 
     if not films:
         raise HTTPException(

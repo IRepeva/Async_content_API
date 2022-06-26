@@ -1,3 +1,4 @@
+from elasticsearch import RequestError
 from services.base import BaseService
 
 
@@ -5,6 +6,8 @@ class QueryParser:
     @staticmethod
     async def parse_params(service: BaseService, **kwargs):
         for param, value in kwargs.items():
+            if param == 'fields':
+                continue
             if value:
                 return {'query': await service.get_query(param, value)}
         return {}

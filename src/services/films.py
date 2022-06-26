@@ -3,10 +3,12 @@ from functools import lru_cache
 from elasticsearch import NotFoundError, AsyncElasticsearch
 from elasticsearch_dsl import Q
 from fastapi import Depends
+from api.v1.models_api.film import FilmDetails
 
 from db.elastic import get_elastic
 from models.film import Film
 from services.base import BaseService
+from utils.cache import ICache, get_cache_storage
 
 
 class FilmService(BaseService):
@@ -42,7 +44,7 @@ class FilmService(BaseService):
 
     async def similar_to(self, similar):
         try:
-            doc = await self.es_manager.get_by_id(similar)
+            doc = await self.get_by_id(similar)
         except NotFoundError:
             return None
 
@@ -52,6 +54,7 @@ class FilmService(BaseService):
 
 @lru_cache()
 def get_film_service(
-        elastic: AsyncElasticsearch = Depends(get_elastic)
+        elastic: AsyncElasticsearch = Depends(get_elastic),
+        cache_storage: ICache = Depends(get_cache_storage)
 ) -> FilmService:
-    return FilmService(elastic)
+    return FilmService(elastic, cache_storage)
