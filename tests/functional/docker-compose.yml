@@ -10,9 +10,9 @@ services:
       - REDIS_URL=${REDIS_URL}
       - ES_HOST=${ES_HOST}
       - ES_PORT=${ES_PORT}
-    depends_on:
-      - elastic_search
-      - redis
+#    depends_on:
+#      - elastic_search
+#      - redis
 
   tests:
     container_name: tests
@@ -27,27 +27,27 @@ services:
       - ES_PORT=${ES_PORT}
       - API_URL=${API_URL}
     entrypoint: >
-      sh -c "pip install -r requirements.txt
-      && python3 utils/wait_for_es.py
+      sh -c "python3 utils/wait_for_es.py
       && python3 utils/wait_for_redis.py
       && pytest src -vv"
     depends_on:
       - api
 
-  elastic_search:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.4
-    container_name: es_service
-    ports:
-      - '9200:9200'
-    environment:
-      - "discovery.type=single-node"
-    volumes:
-      - ${HOST_PATH_ES}:/usr/share/elasticsearch/data
-
-  redis:
-    image: redis
-    container_name: redis
-    ports:
-      - '6379:6379'
-    volumes:
-      - ${HOST_PATH_REDIS}:/var/lib/redis/data
+#  elastic_search:
+#    image: elasticsearch:7.17.4
+#    container_name: es_service
+#    ports:
+#      - '9200:9200'
+#    environment:
+#      - "discovery.type=single-node"
+#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+#    volumes:
+#      - ${HOST_PATH_ES}:/usr/share/elasticsearch/data
+#
+#  redis:
+#    image: redis
+#    container_name: redis
+#    ports:
+#      - '6379:6379'
+#    volumes:
+#      - ${HOST_PATH_REDIS}:/var/lib/redis/data
