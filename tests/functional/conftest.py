@@ -4,7 +4,6 @@ from dataclasses import dataclass
 
 import aiohttp
 import aioredis
-import pytest
 import pytest_asyncio
 from elasticsearch import AsyncElasticsearch
 from multidict import CIMultiDictProxy

@@ -1,7 +1,9 @@
 import abc
+import json
 import logging
 from dataclasses import dataclass
 
+from aioredis import Redis
 from elasticsearch import AsyncElasticsearch
 from elasticsearch import helpers
 
@@ -16,7 +18,7 @@ class AbstractDataPreparer:
         ...
 
     @abc.abstractmethod
-    async def clear(self, key, data):
+    async def clear_all(self):
         ...
 
 
@@ -33,9 +35,9 @@ class ElasticDataPreparer(AbstractDataPreparer):
                                  refresh='wait_for')
 
     @backoff(logger=logger)
-    def create_index(self, index: dict[str, str],
-                     settings: dict | None = None,
-                     mappings: dict | None = None):
+    async def create_index(self, index: dict[str, str],
+                           settings: dict | None = None,
+                           mappings: dict | None = None):
         if mappings is None:
             mappings = index['mappings']
         if settings is None:
@@ -43,11 +45,11 @@ class ElasticDataPreparer(AbstractDataPreparer):
 
         index_name = index['name']
 
-        self.elastic.indices.create(index=index_name, ignore=400,
-                                    body={
-                                        'mappings': mappings,
-                                        'settings': settings
-                                    })
+        await self.elastic.indices.create(index=index_name, ignore=400,
+                                          body={
+                                              'mappings': mappings,
+                                              'settings': settings
+                                          })
         logger.info(f'Index "{index_name}" was created')
 
     def prepare_for_update(self, data: list[dict]) -> list[dict]:
@@ -61,6 +63,7 @@ class ElasticDataPreparer(AbstractDataPreparer):
         ]
         return prepared_data
 
+    @backoff(logger=logger)
     async def check_existence_and_create(self, index):
         index_name = index['name']
         if not await self.elastic.indices.exists(index=index_name):
@@ -68,7 +71,23 @@ class ElasticDataPreparer(AbstractDataPreparer):
                 f'Index "{index_name}" does not exist, '
                 f'index creation was started'
             )
-            self.create_index(index)
+            await self.create_index(index)
 
-    async def clear(self, key, data):
-        ...
+    @backoff(logger=logger)
+    async def clear_all(self):
+        for index in await self.elastic.indices.get('*'):
+            await self.elastic.indices.delete(index=index, ignore=[400, 404])
+
+
+@dataclass
+class RedisDataPreparer(AbstractDataPreparer):
+    redis: Redis
+
+    @backoff(logger=logger)
+    async def load(self, key: str, data: list[dict]):
+        data = json.dumps([json.dumps(item) for item in data])
+        await self.redis.set(key, data)
+
+    @backoff(logger=logger)
+    async def clear_all(self):
+        await self.redis.flushall()
