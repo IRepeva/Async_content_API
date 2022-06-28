@@ -42,7 +42,8 @@ class BaseService:
         self.elastic = elastic
 
     async def get_query(self, param, value):
-        return getattr(self, param)(value).to_dict()
+        query = getattr(self, param)(value)
+        return query.to_dict() if query else None
 
     @property
     def es_manager(self):

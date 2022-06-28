@@ -1,10 +1,9 @@
 from functools import lru_cache
 
+from db.elastic import get_elastic
 from elasticsearch import NotFoundError, AsyncElasticsearch
 from elasticsearch_dsl import Q
 from fastapi import Depends
-
-from db.elastic import get_elastic
 from models.film import Film
 from services.base import BaseService
 
@@ -15,7 +14,7 @@ class FilmService(BaseService):
 
     async def get_query(self, param, value):
         if param == 'similar_to':
-            return (await getattr(self, param)(value)).to_dict()
+            return await getattr(self, param)(value)
         return await super().get_query(param, value)
 
     @property
@@ -42,12 +41,20 @@ class FilmService(BaseService):
 
     async def similar_to(self, similar):
         try:
-            doc = await self.es_manager.get_by_id(similar)
+            doc = await self.get_by_id(similar)
         except NotFoundError:
+            return None
+        if not doc:
             return None
 
         genres = [genre.id for genre in doc.genres]
-        return Q("nested", path='genres', query=Q('terms', genres__id=genres))
+        query = Q(
+            'bool', must=Q("nested", path='genres',
+                           query=Q('terms', genres__id=genres))
+        ) & Q(
+            'bool', must_not=Q('match', id=similar)
+        )
+        return query.to_dict()
 
 
 @lru_cache()

@@ -19,11 +19,11 @@ class PersonService(BaseService):
 
     async def get_persons(self, person_id):
         from services.films import FilmService
-        person = await self.es_manager.get_by_id(person_id)
+        person = await self.get_by_id(person_id)
 
-        film_manager = FilmService(self.elastic).es_manager
+        film_service = FilmService(self.elastic)
         try:
-            films = await film_manager.get_list(person=person_id)
+            films = await film_service.get_list(person=person_id)
         except NotFoundError:
             return None
 
