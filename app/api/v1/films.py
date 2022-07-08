@@ -4,6 +4,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.v1.models_api.film import FilmDetails, Film
+from api.v1.utils.cache import Cache
 from api.v1.utils.errors import NotFoundDetail
 from services.films import FilmService, get_film_service
 
@@ -19,9 +20,12 @@ async def common_parameters(
 
 
 @router.get('/search', response_model=List[Film], summary='Get search results')
+@Cache()
 async def films_search(
+        sort: str | None = None,
         query: str | None = None,
-        common_params: dict = Depends(common_parameters),
+        page: int | None = Query(default=1, alias='page[number]'),
+        page_size: int | None = Query(default=50, alias='page[size]'),
         film_service: FilmService = Depends(get_film_service)
 ) -> List[Film]:
     """
@@ -37,16 +41,18 @@ async def films_search(
     - **title**: film title
     - **imdb_rating**: rating of the movie
     """
-    films_list = await film_service.get_list(query=query, **common_params)
+    films_list = await film_service.get_list(query=query, sort=sort,
+                                             page=page, page_size=page_size)
     if not films_list:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail=NotFoundDetail.FILMS
         )
 
-    return [Film(**film.dict()) for film in films_list]
+    return films_list
 
 
 @router.get('/{film_id}', response_model=FilmDetails, summary="Get film by id")
+@Cache()
 async def film_details(
         film_id: str,
         film_service: FilmService = Depends(get_film_service)
@@ -69,14 +75,17 @@ async def film_details(
             status_code=HTTPStatus.NOT_FOUND, detail=NotFoundDetail.FILM
         )
 
-    return FilmDetails(**film.dict())
+    return film
 
 
 @router.get('/', response_model=List[Film], summary='Get all movies')
+@Cache()
 async def films(
+        sort: str | None = None,
         similar_to: str | None = None,
         genre: str | None = Query(default=None, alias='filter[genre]'),
-        common_params: dict = Depends(common_parameters),
+        page: int | None = Query(default=1, alias='page[number]'),
+        page_size: int | None = Query(default=50, alias='page[size]'),
         film_service: FilmService = Depends(get_film_service)
 ) -> List[Film]:
     """
@@ -90,10 +99,11 @@ async def films(
     - **title**: film title
     - **imdb_rating**: rating of the movie
     """
-    films_list = await film_service.get_list(genre=genre, similar_to=similar_to,
-                                             **common_params)
+    films_list = await film_service.get_list(sort=sort, genre=genre,
+                                             similar_to=similar_to,
+                                             page=page, page_size=page_size)
     if not films_list:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail=NotFoundDetail.FILMS
         )
-    return [Film(**film.dict()) for film in films_list]
+    return films_list

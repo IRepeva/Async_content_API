@@ -1,9 +1,10 @@
-# Проектная работа 5 спринта
+# Project
 
-В папке **tasks** ваша команда найдёт задачи, которые необходимо выполнить во втором спринте модуля "Сервис Async API".
+Project contains 2 services:
+* **API** - API service for movies, persons and genres
+* **TESTS** - functional tests for the API
 
-Как и в прошлом спринте, мы оценили задачи в стори поинтах.
+To run the API use `docker-compose up -d`
+To run all tests use `docker-compose -f tests/functional/docker-compose.yml --env-file tests/functional/.env up -d`
 
-Вы можете разбить эти задачи на более маленькие, например, распределять между участниками команды не большие куски задания, а маленькие подзадачи. В таком случае не забудьте зафиксировать изменения в issues в репозитории.
-
-**От каждого разработчика ожидается выполнение минимум 40% от общего числа стори поинтов в спринте.**
+**_Link to GitHub_**: `https://github.com/IRepeva/Async_API_sprint_1`

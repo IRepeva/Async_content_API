@@ -1,9 +1,12 @@
 from functools import lru_cache
 
-from db.elastic import get_elastic
+from aioredis import Redis
 from elasticsearch import NotFoundError, AsyncElasticsearch
 from elasticsearch_dsl import Q
 from fastapi import Depends
+
+from db.elastic import get_elastic
+from db.redis import get_redis
 from models.film import Film
 from services.base import BaseService
 
@@ -33,7 +36,11 @@ class FilmService(BaseService):
             'bool', should=[
                 Q(
                     "nested", path=role,
-                    query=Q('terms', **{f'{role}.id': [p_id]})
+                    query=Q(
+                        'terms', **{f'{role}.id': [p_id]
+                                    if isinstance(p_id, str)
+                                    else p_id}
+                    )
                 )
                 for role in ('actors', 'writers', 'directors')
             ]
@@ -59,6 +66,7 @@ class FilmService(BaseService):
 
 @lru_cache()
 def get_film_service(
+        redis: Redis = Depends(get_redis),
         elastic: AsyncElasticsearch = Depends(get_elastic)
 ) -> FilmService:
-    return FilmService(elastic)
+    return FilmService(redis, elastic)

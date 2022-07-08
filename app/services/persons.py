@@ -1,10 +1,14 @@
 from functools import lru_cache
+from typing import List
 
+from aioredis import Redis
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from elasticsearch_dsl import Q
 from fastapi import Depends
 
 from db.elastic import get_elastic
+from db.redis import get_redis
+from models import Film
 from models.person import Person
 from services.base import BaseService
 
@@ -17,29 +21,36 @@ class PersonService(BaseService):
     def query(self):
         return lambda query: Q('match', full_name={'query': query})
 
-    async def get_persons(self, person_id):
-        from services.films import FilmService
-        person = await self.get_by_id(person_id)
+    async def add_person_movies(
+            self, persons: Person | List[Person]
+    ) -> List[Person] | None:
 
-        film_service = FilmService(self.elastic)
+        from services.films import FilmService
+        film_service = FilmService(self.redis, self.elastic)
+
+        if isinstance(persons, Person):
+            persons = [persons]
+
+        persons_data = {person.id: person.full_name for person in persons}
+
         try:
-            films = await film_service.get_list(person=person_id)
+            films = await film_service.get_list(person=list(persons_data))
         except NotFoundError:
             return None
 
         if not films:
-            return [person]
+            return persons
 
         persons_films = []
-        self._set_films_for_person(persons_films, person_id,
-                                   person.full_name, films)
+        for p_id, p_name in persons_data.items():
+            self._set_films_to_person(persons_films, p_id, p_name, films)
 
         if not persons_films:
-            return [person]
+            return persons
 
         return persons_films
 
-    def _set_films_for_person(
+    def _set_films_to_person(
             self,
             persons_films: list,
             person_id: str,
@@ -57,12 +68,12 @@ class PersonService(BaseService):
             ('actors', 'actor'): []
         }
 
-        def cond_func(item):
+        def check_func(item):
             return item.id == person_id
 
         for film in films:
             for role in roles:
-                if list(filter(cond_func, getattr(film, role[0]))):
+                if list(filter(check_func, getattr(film, role[0]))):
                     roles[role].append(film.id)
 
         for role in roles:
@@ -75,6 +86,7 @@ class PersonService(BaseService):
 
 @lru_cache()
 def get_person_service(
+        redis: Redis = Depends(get_redis),
         elastic: AsyncElasticsearch = Depends(get_elastic)
 ) -> PersonService:
-    return PersonService(elastic)
+    return PersonService(redis, elastic)

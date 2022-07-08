@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
+from aioredis import Redis
 from elasticsearch import AsyncElasticsearch, NotFoundError
 
 
@@ -34,11 +35,42 @@ class ElasticSearchManager:
         return self.model.MODEL(**doc['_source'])
 
 
+# class RedisManager:
+#     async def _get_from_cache(
+#             self, key: str, model: BaseModel = None
+#     ) -> Optional[BaseModel | List[BaseModel]]:
+#
+#         if model is None:
+#             model = self.MODEL
+#         data = await self.redis.get(key)
+#         if not data:
+#             return None
+#         data = json.loads(data)
+#
+#         if isinstance(data, list):
+#             return [model.parse_raw(item) for item in data]
+#         return model.parse_obj(data)
+#
+#     async def _set_to_cache(self, key: str, data):
+#         if isinstance(data, list):
+#             data = [self.MODEL.json(item) for item in data]
+#             await self.redis.set(key, json.dumps(data))
+#             return await self.redis.expire(key, self.CACHE_EXPIRE_IN_SECONDS)
+#
+#         await self.redis.set(key, self.MODEL.json(data))
+#         await self.redis.expire(key, self.CACHE_EXPIRE_IN_SECONDS)
+#
+#     @abc.abstractmethod
+#     def get_cache_key(self, *args, **kwargs) -> str:
+#         ...
+
+
 class BaseService:
     INDEX = None
     MODEL = None
 
-    def __init__(self, elastic: AsyncElasticsearch):
+    def __init__(self, redis: Redis, elastic: AsyncElasticsearch):
+        self.redis = redis
         self.elastic = elastic
 
     async def get_query(self, param, value):
@@ -48,6 +80,10 @@ class BaseService:
     @property
     def es_manager(self):
         return ElasticSearchManager(self)
+    
+    # @property
+    # def cache_manager(self):
+    #     return RedisManager(self)
 
     async def get_by_id(self, _id):
         return await self.es_manager.get_by_id(_id)

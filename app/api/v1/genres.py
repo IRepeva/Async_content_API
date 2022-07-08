@@ -4,6 +4,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 
 from api.v1.models_api.genre import Genre
+from api.v1.utils.cache import Cache
 from api.v1.utils.errors import NotFoundDetail
 from services.genres import GenreService, get_genre_service
 
@@ -11,6 +12,7 @@ router = APIRouter()
 
 
 @router.get('/', response_model=List[Genre], summary='Get all genres')
+@Cache()
 async def genres_list(
         genre_service: GenreService = Depends(get_genre_service)
 ) -> List[Genre]:
@@ -26,10 +28,11 @@ async def genres_list(
             status_code=HTTPStatus.NOT_FOUND, detail=NotFoundDetail.GENRES
         )
 
-    return [Genre(**genre.dict()) for genre in genres]
+    return genres
 
 
 @router.get('/{genre_id}', response_model=Genre, summary="Get genre by id")
+@Cache()
 async def genre_by_id(
         genre_id: str,
         genre_service: GenreService = Depends(get_genre_service)
@@ -46,4 +49,4 @@ async def genre_by_id(
             status_code=HTTPStatus.NOT_FOUND, detail=NotFoundDetail.GENRE
         )
 
-    return Genre(**genre.dict())
+    return genre

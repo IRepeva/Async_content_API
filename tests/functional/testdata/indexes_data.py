@@ -147,20 +147,39 @@ PERSONS_MAPPING = {
     }
 }
 
+films_data = [
+    {
+        'id': f'Bill_Gates_{i}',
+        'title': f'Walt Disney {genre[1]} stories start at {i}',
+        'description': 'Elon Musk approved!' if i > 0 else 'Jeff Bezos 2',
+        'imdb_rating': 10.0 - i,
+        'directors': [{'id': 'Steve', 'full_name': 'Vozniak'}],
+        'writers': [{'id': 'Henry', 'full_name': 'Ford'}],
+        'actors': [{'id': 'John', 'full_name': 'Rockefeller'}],
+        'genres': [{'id': genre[0], 'name': genre[1]}]
+    } for i, genre in
+    enumerate([('C', 'comedy'), ('H', 'horror'), ('H', 'horror')])
+]
+genres_data = [{'id': i, 'name': i + 100} for i in range(2)]
+
+
 INDEXES_DATA = {
     'movies_index': {
         'name': 'movies',
         'mappings': MOVIES_MAPPING,
-        'settings': RU_EN_SETTINGS
+        'settings': RU_EN_SETTINGS,
+        'test_data': films_data
     },
     'genres_index': {
         'name': 'genres',
         'mappings': GENRES_MAPPING,
-        'settings': RU_EN_SETTINGS
+        'settings': RU_EN_SETTINGS,
+        'test_data': genres_data
     },
     'persons_index': {
         'name': 'persons',
         'mappings': PERSONS_MAPPING,
-        'settings': RU_EN_SETTINGS
+        'settings': RU_EN_SETTINGS,
+        'test_data': ''
     }
 }
