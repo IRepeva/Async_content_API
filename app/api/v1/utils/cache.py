@@ -1,7 +1,9 @@
 import json
 from functools import wraps
+from typing import List
 
 from aioredis import Redis
+from pydantic import BaseModel
 
 from services.base import BaseService
 
@@ -15,8 +17,7 @@ def get_cache_key(kwargs):
             service = value
             continue
         cache_key += f'-{key}:{value}'
-
-    return service.INDEX + cache_key, service
+    return service.INDEX + cache_key if service.INDEX else cache_key, service
 
 
 class Cache:
@@ -43,7 +44,9 @@ class Cache:
 
         return wrapper
 
-    async def _get_from_cache(self, redis: Redis, key: str, model):
+    async def _get_from_cache(
+            self, redis: Redis, key: str, model: BaseModel
+    ) -> BaseModel | List[BaseModel] | None:
         data = await redis.get(key)
         if not data:
             return None

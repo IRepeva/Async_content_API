@@ -1,13 +1,13 @@
 version: '3'
 services:
-  backend:
-    container_name: backend
+  api:
+    container_name: api
     build:
       context: .
       dockerfile: Dockerfile
-      target: prod
+      target: base
     ports:
-      - '8000'
+      - '8000:8000'
     environment:
       - REDIS_URL=${REDIS_URL}
       - ES_HOST=${ES_HOST}
@@ -16,20 +16,6 @@ services:
       - elasticsearch
       - redis
 
-  elasticsearch:
-    image: elasticsearch:7.17.4
-    container_name: elasticsearch
-    ports:
-      - '9200'
-    environment:
-      - "discovery.type=single-node"
-
-  redis:
-    image: redis
-    container_name: redis
-    ports:
-      - '6379'
-
   tests:
     container_name: tests
     build:
@@ -37,17 +23,29 @@ services:
       dockerfile: Dockerfile
       target: tests
     ports:
-      - '8000'
-    volumes:
-      - ./:/app/
+      - '8001:8001'
     environment:
       - REDIS_URL=${REDIS_URL}
-      - ES_HOST=${ES_HOST}
-      - ES_PORT=${ES_PORT}
+      - ES_URL=${ES_URL}
       - API_URL=${API_URL}
     entrypoint: >
-      sh -c "python3 utils/wait_for_es.py
+      sh -c "pip install -r requirements/tests.txt
+      && python3 utils/wait_for_es.py
       && python3 utils/wait_for_redis.py
-      && pytest api/v1 -vv"
+      && python3 -m pytest api/v1 -vv"
     depends_on:
-      - backend
+      - api
+
+  elasticsearch:
+    image: elasticsearch:7.17.4
+    container_name: elasticsearch
+    ports:
+      - '9200:9200'
+    environment:
+      - "discovery.type=single-node"
+
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - '6379:6379'
