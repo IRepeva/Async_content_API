@@ -38,12 +38,12 @@ async def persons_search(
     """
     persons = await person_service.get_list(query=query, page=page,
                                             page_size=page_size)
-    persons_list = await person_service.add_person_movies(persons)
-    if not persons_list:
+    if not persons:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail=NotFoundDetail.PERSONS
         )
 
+    persons_list = await person_service.add_person_movies(persons)
     return persons_list
 
 
@@ -91,10 +91,9 @@ async def person_details(
     - **film_ids**: list of films in which a person participated in a particular role
     """
     person = await person_service.get_by_id(person_id)
-    person = await person_service.add_person_movies(person)
     if not person:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail=NotFoundDetail.PERSON
         )
 
-    return person
+    return await person_service.add_person_movies(person)

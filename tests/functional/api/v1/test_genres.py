@@ -1,76 +1,56 @@
-# import pytest
-#
-# from testdata.indexes_data import INDEXES_DATA
-# from utils.data_preparation.data_preparer import (
-#     ElasticDataPreparer, RedisDataPreparer
-# )
-# from utils.errors import NotFoundDetail
-#
-# pytestmark = pytest.mark.asyncio
-#
-# INDEX = 'genres_index'
-# URL_PREFIX = '/genres'
-#
-#
-# async def test_genre_id_detailed(es_client, redis_client,
-#                                  make_get_request):
-#     id_ = 0
-#     url = URL_PREFIX + f"/{id_}"
-#
-#     # genre not found
-#     redis = RedisDataPreparer(redis_client)
-#     await redis.clear_all()
-#
-#     response = await make_get_request(url)
-#
-#     assert response.status == 404
-#     assert response.body['detail'] == NotFoundDetail.GENRE
-#
-#     # getting data from elastic
-#     elastic = ElasticDataPreparer(es_client)
-#     await elastic.load(index=INDEXES_DATA[INDEX], data=genres_data)
-#
-#     response = await make_get_request(url)
-#
-#     assert response.status == 200
-#     assert response.body == genres_data[id_]
-#
-#     # getting data from cache
-#     await elastic.clear_all()
-#
-#     response = await make_get_request(url)
-#
-#     assert response.status == 200
-#     assert response.body == genres_data[id_]
-#
-#
-# @pytest.mark.parametrize("expected_length, expected_body", (
-#         (  # Getting all genres
-#                 2, [{'id': '0', 'name': f'100'}, {'id': '1', 'title': f'101'}]
-#         ),
-# ))
-# async def test_films(expected_length, expected_body,
-#                      es_client, redis_client, make_get_request):
-#     # getting data from elastic
-#     url = URL_PREFIX
-#
-#     redis = RedisDataPreparer(redis_client)
-#     await redis.clear_all()
-#
-#     elastic = ElasticDataPreparer(es_client)
-#     await elastic.load(index=INDEXES_DATA[INDEX], data=genres_data)
-#
-#     response = await make_get_request(url)
-#
-#     assert response.status == 200
-#     assert len(response.body) == expected_length
-#     assert response.body == expected_body
-#
-#     # getting data from cache
-#     await elastic.clear_all()
-#
-#     response = await make_get_request(url)
-#
-#     assert response.status == 200
-#     assert len(response.body) == expected_length
-#     assert response.body == expected_body
+import pytest
+
+from api.v1.utils.errors import NotFoundDetail
+from conftest import elastic_tear_down
+from testdata.indexes_data import genres_data
+
+pytestmark = pytest.mark.asyncio
+
+INDEX = 'genres_index'
+URL_PREFIX = '/genres'
+
+
+async def test_genre_id_detailed(es_client, make_get_request):
+    genre_num = 0
+    url = URL_PREFIX + f"/{genres_data[genre_num]['id']}"
+
+    # getting data from elastic
+    response = await make_get_request(url)
+
+    assert response.status == 200
+    assert response.body == genres_data[genre_num]
+
+    # getting data from cache
+    await elastic_tear_down(es_client)
+
+    response = await make_get_request(url)
+
+    assert response.status == 200
+    assert response.body == genres_data[genre_num]
+
+
+async def test_genres(es_client, make_get_request):
+    url = URL_PREFIX
+
+    # getting data from elastic
+    response = await make_get_request(url)
+
+    assert response.status == 200
+    assert response.body == genres_data
+
+    # getting data from cache
+    await elastic_tear_down(es_client)
+
+    response = await make_get_request(url)
+
+    assert response.status == 200
+    assert response.body == genres_data
+
+
+async def test_genre_not_found(make_get_request):
+    url = URL_PREFIX + '/Faraday'
+
+    response = await make_get_request(url)
+
+    assert response.status == 404
+    assert response.body['detail'] == NotFoundDetail.GENRE

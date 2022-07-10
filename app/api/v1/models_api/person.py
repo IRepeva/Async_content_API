@@ -1,6 +1,6 @@
 import uuid
-
 from typing import List
+
 from api.v1.models_api.mixin import MixinModel
 
 
@@ -10,4 +10,4 @@ class PersonBase(MixinModel):
 
 class Person(PersonBase):
     role: str | None = ''
-    film_ids: List[uuid.UUID] | None = []
+    film_ids: List[uuid.UUID | str] | None = []
