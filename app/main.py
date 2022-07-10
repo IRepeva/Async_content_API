@@ -7,8 +7,7 @@ from fastapi.responses import ORJSONResponse
 from api.v1 import films, genres, persons
 from core.config import settings
 from core.logger import LOGGING
-from db import elastic
-from db import redis
+from db import elastic, redis
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -25,9 +24,7 @@ async def startup():
         max_connections=20
     )
     redis.redis = aioredis.Redis(connection_pool=pool)
-    elastic.es = AsyncElasticsearch(
-        hosts=[f'{settings.ELASTIC_HOST}:{settings.ELASTIC_PORT}']
-    )
+    elastic.es = AsyncElasticsearch(hosts=[f'{settings.ELASTIC_URL}'])
 
 
 @app.on_event('shutdown')

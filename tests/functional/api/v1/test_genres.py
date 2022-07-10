@@ -1,3 +1,5 @@
+import http
+
 import pytest
 
 from api.v1.utils.errors import NotFoundDetail
@@ -17,7 +19,7 @@ async def test_genre_id_detailed(es_client, make_get_request):
     # getting data from elastic
     response = await make_get_request(url)
 
-    assert response.status == 200
+    assert response.status == http.HTTPStatus.OK
     assert response.body == genres_data[genre_num]
 
     # getting data from cache
@@ -25,7 +27,7 @@ async def test_genre_id_detailed(es_client, make_get_request):
 
     response = await make_get_request(url)
 
-    assert response.status == 200
+    assert response.status == http.HTTPStatus.OK
     assert response.body == genres_data[genre_num]
 
 
@@ -35,7 +37,7 @@ async def test_genres(es_client, make_get_request):
     # getting data from elastic
     response = await make_get_request(url)
 
-    assert response.status == 200
+    assert response.status == http.HTTPStatus.OK
     assert response.body == genres_data
 
     # getting data from cache
@@ -43,7 +45,7 @@ async def test_genres(es_client, make_get_request):
 
     response = await make_get_request(url)
 
-    assert response.status == 200
+    assert response.status == http.HTTPStatus.OK
     assert response.body == genres_data
 
 
@@ -52,5 +54,5 @@ async def test_genre_not_found(make_get_request):
 
     response = await make_get_request(url)
 
-    assert response.status == 404
+    assert response.status == http.HTTPStatus.NOT_FOUND
     assert response.body['detail'] == NotFoundDetail.GENRE

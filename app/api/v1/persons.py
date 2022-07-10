@@ -5,10 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.v1.models_api.film import Film
 from api.v1.models_api.person import Person
-from api.v1.utils.cache import Cache
 from api.v1.utils.errors import NotFoundDetail
 from services.films import FilmService, get_film_service
 from services.persons import PersonService, get_person_service
+from utils.cache import Cache
 
 router = APIRouter()
 

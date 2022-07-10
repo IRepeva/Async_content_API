@@ -10,8 +10,7 @@ services:
       - '8000:8000'
     environment:
       - REDIS_URL=${REDIS_URL}
-      - ES_HOST=${ES_HOST}
-      - ES_PORT=${ES_PORT}
+      - ES_URL=${ES_URL}
     depends_on:
       - elasticsearch
       - redis
@@ -45,7 +44,7 @@ services:
       - "discovery.type=single-node"
 
   redis:
-    image: redis
+    image: redis:6.2-alpine
     container_name: redis
     ports:
       - '6379:6379'

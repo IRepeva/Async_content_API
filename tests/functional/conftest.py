@@ -1,4 +1,5 @@
 import asyncio
+import http
 import logging
 import sys
 from dataclasses import dataclass
@@ -75,7 +76,9 @@ def make_get_request(session):
 
 
 async def elastic_tear_down(es_client):
-    await es_client.options(ignore_status=[400, 404]).indices.delete(index="*")
+    await es_client.options(
+        ignore_status=[http.HTTPStatus.BAD_REQUEST, http.HTTPStatus.NOT_FOUND]
+    ).indices.delete(index="*")
 
 
 @pytest_asyncio.fixture(scope="function", autouse=True)
@@ -90,7 +93,9 @@ async def start_up_tear_down(redis_client, es_client):
                 f'Index "{index_name}" does not exist, '
                 f'index creation was started'
             )
-            await es_client.options(ignore_status=[400]).indices.create(
+            await es_client.options(
+                ignore_status=[http.HTTPStatus.BAD_REQUEST]
+            ).indices.create(
                 index=index_name,
                 body={
                     'mappings': index['mappings'],
