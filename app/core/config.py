@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     # ELASTICSEARCH
     ELASTIC_HOST: str = Field('127.0.0.1', env='ES_HOST')
     ELASTIC_PORT: int = Field(9200, env='ES_PORT')
+    ELASTIC_URL: str = Field('http://127.0.0.1:9200', env='ES_URL')
 
     # REDIS
     REDIS_URL: str = Field('redis://127.0.0.1:6379', env='REDIS_URL')

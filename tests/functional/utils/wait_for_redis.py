@@ -25,4 +25,5 @@ def check_redis_connection():
     )
 
 
-check_redis_connection()
+if __name__ == '__main__':
+    check_redis_connection()

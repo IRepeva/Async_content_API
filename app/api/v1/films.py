@@ -4,9 +4,9 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.v1.models_api.film import FilmDetails, Film
-from api.v1.utils.cache import Cache
 from api.v1.utils.errors import NotFoundDetail
 from services.films import FilmService, get_film_service
+from utils.cache import Cache
 
 router = APIRouter()
 

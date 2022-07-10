@@ -24,4 +24,5 @@ def check_es_connection():
     logger.info(f'Connected to {elastic_host}')
 
 
-check_es_connection()
+if __name__ == '__main__':
+    check_es_connection()

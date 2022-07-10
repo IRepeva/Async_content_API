@@ -21,7 +21,7 @@ def get_cache_key(kwargs):
 
 
 class Cache:
-    FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5
+    CACHE_EXPIRE_IN_SECONDS = 60 * 5
 
     def __init__(self, *args, **kwargs):
         self.cache_args = args
@@ -60,7 +60,7 @@ class Cache:
     async def _set_to_cache(self, redis: Redis, key: str, data, model):
         if isinstance(data, list):
             data = [model.json(item) for item in data]
-            return await redis.set(key, json.dumps(data))
+            return await redis.setex(key, self.CACHE_EXPIRE_IN_SECONDS,
+                                     json.dumps(data))
 
-        await redis.set(key, model.json(data))
-        await redis.expire(key, self.FILM_CACHE_EXPIRE_IN_SECONDS)
+        await redis.setex(key, self.CACHE_EXPIRE_IN_SECONDS, model.json(data))

@@ -1,9 +1,11 @@
+import http
+
 import pytest
 
 from api.v1.utils.errors import NotFoundDetail
 from conftest import elastic_tear_down
-from testdata.indexes_data import persons_data, persons_data_result, \
-    films_data_result
+from testdata.indexes_data import persons_data
+from testdata.test_data import persons_data_result, films_data_result
 
 pytestmark = pytest.mark.asyncio
 
@@ -20,7 +22,7 @@ async def test_person_id_detailed(es_client, make_get_request):
     # getting data from elastic
     response = await make_get_request(url)
 
-    assert response.status == 200
+    assert response.status == http.HTTPStatus.OK
     assert response.body == [persons_data_result[person_num]]
 
     # getting data from cache
@@ -28,7 +30,7 @@ async def test_person_id_detailed(es_client, make_get_request):
 
     response = await make_get_request(url)
 
-    assert response.status == 200
+    assert response.status == http.HTTPStatus.OK
     assert response.body == [persons_data_result[person_num]]
 
 
@@ -64,7 +66,7 @@ async def test_persons(url, query_params, expected_body,
 
     response = await make_get_request(url, query_params)
 
-    assert response.status == 200
+    assert response.status == http.HTTPStatus.OK
     assert response.body == expected_body
 
     # getting data from cache
@@ -72,12 +74,12 @@ async def test_persons(url, query_params, expected_body,
 
     response = await make_get_request(url, query_params)
 
-    assert response.status == 200
+    assert response.status == http.HTTPStatus.OK
     assert response.body == expected_body
 
 
 @pytest.mark.parametrize("url, query_params, not_found", (
-        (  # Zero page size
+        (  # Not existing ID
             '/Maxwell', {},
             NotFoundDetail.PERSON
         ),
@@ -100,5 +102,5 @@ async def test_persons_not_found(url, query_params, not_found, make_get_request)
 
     response = await make_get_request(url, query_params)
 
-    assert response.status == 404
+    assert response.status == http.HTTPStatus.NOT_FOUND
     assert response.body['detail'] == not_found
