@@ -35,36 +35,6 @@ class ElasticSearchManager:
         return self.model.MODEL(**doc['_source'])
 
 
-# class RedisManager:
-#     async def _get_from_cache(
-#             self, key: str, model: BaseModel = None
-#     ) -> Optional[BaseModel | List[BaseModel]]:
-#
-#         if model is None:
-#             model = self.MODEL
-#         data = await self.redis.get(key)
-#         if not data:
-#             return None
-#         data = json.loads(data)
-#
-#         if isinstance(data, list):
-#             return [model.parse_raw(item) for item in data]
-#         return model.parse_obj(data)
-#
-#     async def _set_to_cache(self, key: str, data):
-#         if isinstance(data, list):
-#             data = [self.MODEL.json(item) for item in data]
-#             await self.redis.set(key, json.dumps(data))
-#             return await self.redis.expire(key, self.CACHE_EXPIRE_IN_SECONDS)
-#
-#         await self.redis.set(key, self.MODEL.json(data))
-#         await self.redis.expire(key, self.CACHE_EXPIRE_IN_SECONDS)
-#
-#     @abc.abstractmethod
-#     def get_cache_key(self, *args, **kwargs) -> str:
-#         ...
-
-
 class BaseService:
     INDEX = None
     MODEL = None

@@ -5,6 +5,6 @@ Project contains 2 services:
 * **TESTS** - functional tests for the API
 
 To run the API use `docker-compose up -d`
-To run all tests use `docker-compose -f tests/functional/docker-compose.yml --env-file tests/functional/.env up -d`
+To run all tests use `docker-compose -f docker-compose.test.yml up -d`
 
-**_Link to GitHub_**: `https://github.com/IRepeva/Async_API_sprint_1`
+**_Link to GitHub_**: `https://github.com/IRepeva/Async_API_sprint_2`
