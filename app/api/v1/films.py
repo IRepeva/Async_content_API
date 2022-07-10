@@ -11,14 +11,6 @@ from services.films import FilmService, get_film_service
 router = APIRouter()
 
 
-async def common_parameters(
-        sort: str | None = None,
-        page: int | None = Query(default=1, alias='page[number]'),
-        page_size: int | None = Query(default=50, alias='page[size]')
-):
-    return {'sort': sort, 'page': page, 'page_size': page_size}
-
-
 @router.get('/search', response_model=List[Film], summary='Get search results')
 @Cache()
 async def films_search(

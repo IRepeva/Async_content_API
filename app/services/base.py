@@ -50,10 +50,6 @@ class BaseService:
     @property
     def es_manager(self):
         return ElasticSearchManager(self)
-    
-    # @property
-    # def cache_manager(self):
-    #     return RedisManager(self)
 
     async def get_by_id(self, _id):
         return await self.es_manager.get_by_id(_id)
