@@ -1,16 +1,20 @@
 import asyncio
+import logging
 import sys
 from dataclasses import dataclass
 
 import aiohttp
 import aioredis
-import pytest
 import pytest_asyncio
 from elasticsearch import AsyncElasticsearch
+from elasticsearch import helpers
 from multidict import CIMultiDictProxy
 
 sys.path.append('.')
 from settings import test_settings
+from testdata.indexes_data import INDEXES_DATA
+
+logger = logging.getLogger(__name__)
 
 SERVICE_URL = test_settings.SERVICE_URL
 API_URL = SERVICE_URL + '/api/v1'
@@ -39,9 +43,7 @@ async def session():
 
 @pytest_asyncio.fixture(scope='session')
 async def es_client():
-    client = AsyncElasticsearch(
-        hosts=f'{test_settings.ELASTIC_HOST}:{test_settings.ELASTIC_PORT}'
-    )
+    client = AsyncElasticsearch(hosts=f'{test_settings.ELASTIC_URL}')
     yield client
     await client.close()
 
@@ -70,3 +72,48 @@ def make_get_request(session):
             )
 
     return inner
+
+
+async def elastic_tear_down(es_client):
+    await es_client.options(ignore_status=[400, 404]).indices.delete(index="*")
+
+
+@pytest_asyncio.fixture(scope="function", autouse=True)
+async def start_up_tear_down(redis_client, es_client):
+    logger.info('Setting up')
+    await redis_client.flushall()
+
+    for index in INDEXES_DATA.values():
+        index_name = index['name']
+        if not await es_client.indices.exists(index=index_name):
+            logger.info(
+                f'Index "{index_name}" does not exist, '
+                f'index creation was started'
+            )
+            await es_client.options(ignore_status=[400]).indices.create(
+                index=index_name,
+                body={
+                    'mappings': index['mappings'],
+                    'settings': index['settings']
+                }
+            )
+            logger.info(f'Index "{index_name}" was created')
+
+        data = prepare_for_update(index['test_data'])
+        await helpers.async_bulk(es_client, data, index=index['name'],
+                                 refresh='wait_for')
+    yield
+    logger.info('Tearing down')
+    await elastic_tear_down(es_client)
+
+
+def prepare_for_update(data: list[dict]) -> list[dict]:
+    prepared_data = [
+        {
+            "_op_type": 'update',
+            "_id": str(item['id']),
+            "doc": item,
+            "doc_as_upsert": True
+        } for item in data
+    ]
+    return prepared_data

@@ -12,14 +12,14 @@ from settings import test_settings
 
 logger = logging.getLogger(__name__)
 
-elastic_host = f'{test_settings.ELASTIC_HOST}:{test_settings.ELASTIC_PORT}'
+elastic_host = f'{test_settings.ELASTIC_URL}'
 elastic = Elasticsearch(hosts=[elastic_host])
 
 
 @backoff(start_sleep_time=1, factor=2, border_sleep_time=6, logger=logger)
 def check_es_connection():
     while not elastic.ping():
-        logger.info('Trying to connect to ElasticSearch...')
+        logger.info(f'Trying to connect to {elastic_host}...')
         raise ConnectionRefusedError
     logger.info(f'Connected to {elastic_host}')
 
