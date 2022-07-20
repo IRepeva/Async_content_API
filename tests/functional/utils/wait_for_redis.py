@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 
-import redis as redis
+import redis
 
 from backoff import backoff
 
