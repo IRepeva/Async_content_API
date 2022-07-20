@@ -15,8 +15,6 @@ RUN pip install -r requirements/base.txt --no-cache-dir
 
 COPY --chown=app_user:app_group ./app .
 
-#USER app_user
-
 CMD ["gunicorn", "main:app", "-w", "10", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
 
 
