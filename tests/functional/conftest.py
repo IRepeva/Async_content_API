@@ -62,9 +62,9 @@ async def redis_client():
 
 @pytest_asyncio.fixture
 def make_get_request(session):
-    async def inner(method: str, params: dict | None = None) -> HTTPResponse:
+    async def inner(path: str, params: dict | None = None) -> HTTPResponse:
         params = params or {}
-        url = API_URL + method
+        url = API_URL + path
         async with session.get(url, params=params) as response:
             return HTTPResponse(
                 body=await response.json(),
