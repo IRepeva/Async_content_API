@@ -10,7 +10,7 @@ RUN pip install --upgrade pip &&  \
     groupadd -r app_group &&  \
     useradd -d /app -r -g app_group app_user
 
-COPY ./requirements requirements
+COPY --chown=app_user:app_group ./requirements requirements
 RUN pip install -r requirements/base.txt --no-cache-dir
 
 COPY --chown=app_user:app_group ./app .
@@ -22,8 +22,10 @@ FROM base AS tests
 
 WORKDIR /app
 
-COPY --from=base /app ./api
+COPY --from=base --chown=app_user:app_group /app ./api
 
-RUN pip install --user -r requirements/tests.txt --no-cache-dir
+RUN pip install -r requirements/tests.txt --no-cache-dir
 
-COPY tests/functional .
+COPY --chown=app_user:app_group tests/functional .
+
+USER app_user
