@@ -5,7 +5,9 @@ import pytest
 from api.v1.utils.errors import NotFoundDetail
 from conftest import elastic_tear_down
 from testdata.indexes_data import persons_data
-from testdata.test_data import persons_data_result, films_data_result
+from testdata.test_data import (
+    persons_data_result, films_data_result, not_existing_person
+)
 
 pytestmark = pytest.mark.asyncio
 
@@ -16,6 +18,13 @@ person_id = persons_data[person_num]['id']
 
 
 async def test_person_id_detailed(es_client, make_get_request):
+
+    # getting not existing ID
+    url = URL_PREFIX + f'/{not_existing_person}'
+    response = await make_get_request(url)
+
+    assert response.status == http.HTTPStatus.NOT_FOUND
+    assert response.body['detail'] == NotFoundDetail.PERSON
 
     url = URL_PREFIX + f"/{person_id}"
 
@@ -78,29 +87,22 @@ async def test_persons(url, query_params, expected_body,
     assert response.body == expected_body
 
 
-@pytest.mark.parametrize("url, query_params, not_found", (
-        (  # Not existing ID
-            '/Maxwell', {},
-            NotFoundDetail.PERSON
-        ),
+@pytest.mark.parametrize("query_params", (
         (  # Zero page size
-            '/search', {'page[size]': 0},
-            NotFoundDetail.PERSONS
+            {'page[size]': 0}
         ),
         (  # Page number greater than the last one
-            '/search', {'page[size]': 1, 'page[number]': 77},
-            NotFoundDetail.PERSONS
+            {'page[size]': 1, 'page[number]': 77}
         ),
         (  # No search results
-            '/search', {'query': 'Dont Be a Menace to South Central...'},
-            NotFoundDetail.PERSONS
+            {'query': 'Dont Be a Menace to South Central...'}
         ),
 ))
-async def test_persons_not_found(url, query_params, not_found, make_get_request):
+async def test_persons_not_found(query_params, make_get_request):
 
-    url = URL_PREFIX + url
+    url = URL_PREFIX + '/search'
 
     response = await make_get_request(url, query_params)
 
     assert response.status == http.HTTPStatus.NOT_FOUND
-    assert response.body['detail'] == not_found
+    assert response.body['detail'] == NotFoundDetail.PERSONS

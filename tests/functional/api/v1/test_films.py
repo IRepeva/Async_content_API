@@ -5,7 +5,7 @@ import pytest
 from api.v1.utils.errors import NotFoundDetail
 from conftest import elastic_tear_down
 from testdata.indexes_data import films_data
-from testdata.test_data import films_data_result
+from testdata.test_data import films_data_result, not_existing_film
 
 pytestmark = pytest.mark.asyncio
 
@@ -14,14 +14,22 @@ URL_PREFIX = '/films'
 
 
 async def test_film_id_detailed(es_client, make_get_request):
-    film_num = 0
-    url = URL_PREFIX + f"/{films_data[film_num]['id']}"
+
+    # getting not existing ID
+    url = URL_PREFIX + f'/{not_existing_film}'
+    response = await make_get_request(url)
+
+    assert response.status == http.HTTPStatus.NOT_FOUND
+    assert response.body['detail'] == NotFoundDetail.FILM
+
+    test_film = films_data[0]
+    url = URL_PREFIX + f"/{test_film['id']}"
 
     # getting data from elastic
     response = await make_get_request(url)
 
     assert response.status == http.HTTPStatus.OK
-    assert response.body == films_data[film_num]
+    assert response.body == test_film
 
     # getting data from cache
     await elastic_tear_down(es_client)
@@ -29,7 +37,7 @@ async def test_film_id_detailed(es_client, make_get_request):
     response = await make_get_request(url)
 
     assert response.status == http.HTTPStatus.OK
-    assert response.body == films_data[film_num]
+    assert response.body == test_film
 
 
 @pytest.mark.parametrize("url, query_params, expected_body", (
@@ -90,33 +98,25 @@ async def test_films(url, query_params, expected_body,
     assert response.body == expected_body
 
 
-@pytest.mark.parametrize("url, query_params, not_found", (
-        (  # Not existing ID
-            '/Lifschitz', {},
-            NotFoundDetail.FILM
-        ),
+@pytest.mark.parametrize("url, query_params", (
         (  # Zero page size
-            '/', {'page[size]': 0},
-            NotFoundDetail.FILMS
+            '/', {'page[size]': 0}
         ),
         (  # Page number greater than the last one
-            '/', {'page[size]': 1, 'page[number]': 77},
-            NotFoundDetail.FILMS
+            '/', {'page[size]': 1, 'page[number]': 77}
         ),
         (  # Genre doesn't exist
-            '/', {'filter[genre]': 'Its too serious to laugh'},
-            NotFoundDetail.FILMS
+            '/', {'filter[genre]': 'Its too serious to laugh'}
         ),
         (  # No search results
-            '/search', {'query': 'Dont mess up with Feynman'},
-            NotFoundDetail.FILMS
+            '/search', {'query': 'Dont mess up with Feynman'}
         ),
 ))
-async def test_films_not_found(url, query_params, not_found, make_get_request):
+async def test_films_not_found(url, query_params, make_get_request):
 
     url = URL_PREFIX + url
 
     response = await make_get_request(url, query_params)
 
     assert response.status == http.HTTPStatus.NOT_FOUND
-    assert response.body['detail'] == not_found
+    assert response.body['detail'] == NotFoundDetail.FILMS

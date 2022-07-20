@@ -3,7 +3,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from api.v1.models_api.genre import Genre
+from api.v1.models.genre import Genre
 from api.v1.utils.errors import NotFoundDetail
 from services.genres import GenreService, get_genre_service
 from utils.cache import Cache

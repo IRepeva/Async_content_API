@@ -1,4 +1,3 @@
-import os
 from functools import lru_cache
 from logging import config as logging_config
 
@@ -13,11 +12,8 @@ logging_config.dictConfig(LOGGING)
 class Settings(BaseSettings):
     # PROJECT
     PROJECT_NAME = Field('movies', env='PROJECT_NAME')
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     # ELASTICSEARCH
-    ELASTIC_HOST: str = Field('127.0.0.1', env='ES_HOST')
-    ELASTIC_PORT: int = Field(9200, env='ES_PORT')
     ELASTIC_URL: str = Field('http://127.0.0.1:9200', env='ES_URL')
 
     # REDIS

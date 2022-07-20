@@ -56,8 +56,10 @@ class FilmService(BaseService):
 
         genres = [genre.id for genre in doc.genres]
         query = Q(
-            'bool', must=Q("nested", path='genres',
-                           query=Q('terms', genres__id=genres))
+            'bool', must=Q(
+                "nested", path='genres',
+                query=Q('terms', genres__id=genres)
+            )
         ) & Q(
             'bool', must_not=Q('match', id=similar)
         )
