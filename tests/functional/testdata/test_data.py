@@ -14,6 +14,7 @@ films_data = [
     } for i, genre in
     enumerate([('C', 'comedy'), ('H', 'horror'), ('H', 'horror')])
 ]
+not_existing_film = 'Lifschitz'
 
 genres_data = [{'id': f'{i}', 'name': f'Murdock_{i}'} for i in range(2)]
 
@@ -22,6 +23,7 @@ persons_data = [
     {'id': 'Henry2', 'full_name': 'Henry Ford'},
     {'id': 'John', 'full_name': 'John Rockefeller'}
 ]
+not_existing_person = 'Maxwell'
 
 
 films_data_result = [

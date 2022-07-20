@@ -1,8 +1,8 @@
 from typing import List
 
-from api.v1.models_api.genre import Genre
-from api.v1.models_api.mixin import MixinModel
-from api.v1.models_api.person import PersonBase
+from api.v1.models.genre import Genre
+from api.v1.models.mixin import MixinModel
+from api.v1.models.person import PersonBase
 
 
 class Film(MixinModel):

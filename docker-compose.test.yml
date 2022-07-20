@@ -28,8 +28,7 @@ services:
       - ES_URL=${ES_URL}
       - API_URL=${API_URL}
     entrypoint: >
-      sh -c "pip install -r requirements/tests.txt
-      && python3 utils/wait_for_es.py
+      sh -c "python3 utils/wait_for_es.py
       && python3 utils/wait_for_redis.py
       && python3 -m pytest api/v1 -vv"
     depends_on:
